@@ -1,0 +1,8 @@
+import { defineScalarTag, type ScalarTagDefinition } from '../../tag.ts'
+
+const strTag: ScalarTagDefinition<string> = defineScalarTag('tag:yaml.org,2002:str', {
+  resolve: (source) => source,
+  identify: (data) => typeof data === 'string'
+})
+
+export { strTag }
