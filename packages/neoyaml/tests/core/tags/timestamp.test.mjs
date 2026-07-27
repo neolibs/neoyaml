@@ -1,9 +1,10 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
-import { load, dump, YAML11_SCHEMA, YAMLException } from 'neoyaml'
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-describe('tags', () => {
-  it('timestamp', () => {
+import { load, dump, YAML11_SCHEMA, YAMLException } from "neoyaml";
+
+describe("tags", () => {
+  it("timestamp", () => {
     const src = `
 - 2001-12-15T02:59:43.1Z       # canonical
 - 2001-12-14t21:59:43.10-05:00 # valid iso8601
@@ -19,46 +20,56 @@ describe('tags', () => {
 - 2001-12-14 21:59:43+1
 - 2001-12-14 21:59:43-1:30
 - 2005-07-08 17:35:04.517600
-`
+`;
     const expected = [
       new Date(Date.UTC(2001, 11, 15, 2, 59, 43, 100)),
       new Date(Date.UTC(2001, 11, 15, 2, 59, 43, 100)),
       new Date(Date.UTC(2001, 11, 15, 2, 59, 43, 100)),
       new Date(Date.UTC(2001, 11, 15, 2, 59, 43, 100)),
       new Date(Date.UTC(2002, 11, 14)),
-      '2002-1-1',
+      "2002-1-1",
 
       new Date(Date.UTC(2001, 11, 15, 3, 29, 43, 100)),
       new Date(Date.UTC(2001, 11, 14, 16, 29, 43, 100)),
       new Date(Date.UTC(2001, 11, 14, 21, 59, 43, 1)),
-      new Date(Date.UTC(2001, 11, 14, (21 - 1), 59, 43, 0)),
-      new Date(Date.UTC(2001, 11, 14, (21 + 1), (59 + 30), 43, 0)),
-      new Date(Date.UTC(2005, 6, 8, 17, 35, 4, 517))
-    ]
+      new Date(Date.UTC(2001, 11, 14, 21 - 1, 59, 43, 0)),
+      new Date(Date.UTC(2001, 11, 14, 21 + 1, 59 + 30, 43, 0)),
+      new Date(Date.UTC(2005, 6, 8, 17, 35, 4, 517)),
+    ];
 
-    assert.deepStrictEqual(load(src, { schema: YAML11_SCHEMA }), expected)
-    assert.deepStrictEqual(load(dump(expected, { schema: YAML11_SCHEMA }), { schema: YAML11_SCHEMA }), expected)
-  })
+    assert.deepStrictEqual(load(src, { schema: YAML11_SCHEMA }), expected);
+    assert.deepStrictEqual(
+      load(dump(expected, { schema: YAML11_SCHEMA }), {
+        schema: YAML11_SCHEMA,
+      }),
+      expected,
+    );
+  });
 
-  it('Resolving explicit !!timestamp on empty node', () => {
-    assert.throws(() => { load('!!timestamp', { schema: YAML11_SCHEMA }) }, YAMLException)
-  })
+  it("Resolving explicit !!timestamp on empty node", () => {
+    assert.throws(() => {
+      load("!!timestamp", { schema: YAML11_SCHEMA });
+    }, YAMLException);
+  });
 
-  it('timestamp rejects values normalized by Date', () => {
+  it("timestamp rejects values normalized by Date", () => {
     const invalid = [
-      '2023-99-99',
-      '2023-02-30',
-      '2023-02-31 00:00:00',
-      '2023-01-01 24:00:00',
-      '2023-01-01 00:60:00',
-      '2023-01-01 00:00:60',
-      '2023-01-01 00:00:00 +24',
-      '2023-01-01 00:00:00 +1:60'
-    ]
+      "2023-99-99",
+      "2023-02-30",
+      "2023-02-31 00:00:00",
+      "2023-01-01 24:00:00",
+      "2023-01-01 00:60:00",
+      "2023-01-01 00:00:60",
+      "2023-01-01 00:00:00 +24",
+      "2023-01-01 00:00:00 +1:60",
+    ];
 
     for (const value of invalid) {
-      assert.strictEqual(load(value, { schema: YAML11_SCHEMA }), value)
-      assert.throws(() => load(`!!timestamp ${value}`, { schema: YAML11_SCHEMA }), /cannot resolve/)
+      assert.strictEqual(load(value, { schema: YAML11_SCHEMA }), value);
+      assert.throws(
+        () => load(`!!timestamp ${value}`, { schema: YAML11_SCHEMA }),
+        /cannot resolve/,
+      );
     }
-  })
-})
+  });
+});

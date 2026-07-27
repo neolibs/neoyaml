@@ -1,12 +1,10 @@
-import { describe, it } from 'node:test'
+import assert from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 
-import assert from 'node:assert'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { JSONParser } from '@streamparser/json'
-
-import { tagNameFull, tagNameShort } from '../../src/common/tagname.ts'
+import { JSONParser } from "@streamparser/json";
 import {
   load,
   loadAll,
@@ -30,8 +28,10 @@ import {
   seqTag,
   mapTag,
   parseEvents,
-  getScalarValue
-} from 'neoyaml'
+  getScalarValue,
+} from "neoyaml";
+
+import { tagNameFull, tagNameShort } from "../../src/common/tagname.ts";
 
 // The yaml-test-suite follows the libyaml convention: a tag outside the core
 // schema is constructed by node kind (scalar→str, seq→seq, map→map), and its
@@ -41,239 +41,249 @@ import {
 // so they only fire for tags not already covered by the core schema. This is a
 // test-only schema; it does not change how neoyaml loads by default.
 const SPEC_SCHEMA = CORE_SCHEMA.withTags(
-  { ...strTag, tagName: '', matchByTagPrefix: true },
-  { ...seqTag, tagName: '', matchByTagPrefix: true },
-  { ...mapTag, tagName: '', matchByTagPrefix: true }
-)
+  { ...strTag, tagName: "", matchByTagPrefix: true },
+  { ...seqTag, tagName: "", matchByTagPrefix: true },
+  { ...mapTag, tagName: "", matchByTagPrefix: true },
+);
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const suiteDir = path.join(__dirname, 'yaml-test-suite')
-const srcDir = path.join(suiteDir, 'src')
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const suiteDir = path.join(__dirname, "yaml-test-suite");
+const srcDir = path.join(suiteDir, "src");
 
 // YAML samples contain markers to visualize whitespace and control characters.
 // This function replaces them with the actual characters before parsing.
-function unescapeFixtureText (text) {
+function unescapeFixtureText(text) {
   return text
-    .replaceAll('␣', ' ')
-    .replace(/—*»/g, '\t')
-    .replaceAll('←', '\r')
-    .replaceAll('⇔', '\uFEFF')
-    .replaceAll('↵', '')
-    .replace(/∎\n$/u, '')
+    .replaceAll("␣", " ")
+    .replace(/—*»/g, "\t")
+    .replaceAll("←", "\r")
+    .replaceAll("⇔", "\uFEFF")
+    .replaceAll("↵", "")
+    .replace(/∎\n$/u, "");
 }
 
-function expectedTreeLines (tree) {
-  const lines = []
+function expectedTreeLines(tree) {
+  const lines = [];
 
-  for (const line of tree.split('\n')) {
-    const trimmed = line.trim()
+  for (const line of tree.split("\n")) {
+    const trimmed = line.trim();
 
-    if (trimmed === '' || trimmed === '+STR' || trimmed === '-STR') continue
+    if (trimmed === "" || trimmed === "+STR" || trimmed === "-STR") continue;
     // Significant (e.g. trailing) spaces in scalar values are visualized with ␣.
-    lines.push(trimmed.replaceAll('␣', ' '))
+    lines.push(trimmed.replaceAll("␣", " "));
   }
 
-  return lines
+  return lines;
 }
 
-function parseConcatenatedJson (str) {
-  const results = []
-  const parser = new JSONParser({ separator: '', paths: ['$'] })
+function parseConcatenatedJson(str) {
+  const results = [];
+  const parser = new JSONParser({ separator: "", paths: ["$"] });
 
-  parser.onValue = ({ value }) => results.push(value)
-  parser.write(str)
+  parser.onValue = ({ value }) => results.push(value);
+  parser.write(str);
 
-  return results
+  return results;
 }
 
-function escapeTreeValue (value) {
+function escapeTreeValue(value) {
   return value
-    .replaceAll('\\', '\\\\')
-    .replaceAll('\n', '\\n')
-    .replaceAll('\r', '\\r')
-    .replaceAll('\t', '\\t')
-    .replaceAll('\b', '\\b')
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\n", "\\n")
+    .replaceAll("\r", "\\r")
+    .replaceAll("\t", "\\t")
+    .replaceAll("\b", "\\b");
 }
 
-function formatRange (input, start, end) {
-  return start === -1 ? '' : input.slice(start, end)
+function formatRange(input, start, end) {
+  return start === -1 ? "" : input.slice(start, end);
 }
 
 // Resolve a raw tag (e.g. !foo, !!str, !e!tag%21, !<verbatim>) into its full
 // form using the current document's TAG directives, mirroring what the
 // yaml-test-suite tree expects. The parser stores raw tag ranges; the directives
 // needed to resolve them are carried on the DOCUMENT event.
-function formatTag (tag, tagHandlers) {
-  if (tag === '') return ''
-  if (tag.startsWith('!<') && tag.endsWith('>')) return `<${tag.slice(2, -1)}>`
+function formatTag(tag, tagHandlers) {
+  if (tag === "") return "";
+  if (tag.startsWith("!<") && tag.endsWith(">")) return `<${tag.slice(2, -1)}>`;
 
-  return `<${tagNameFull(tag, tagHandlers)}>`
+  return `<${tagNameFull(tag, tagHandlers)}>`;
 }
 
-function formatProperties (input, event, tagHandlers) {
-  const parts = []
-  const anchor = formatRange(input, event.anchorStart, event.anchorEnd)
-  const tag = formatRange(input, event.tagStart, event.tagEnd)
+function formatProperties(input, event, tagHandlers) {
+  const parts = [];
+  const anchor = formatRange(input, event.anchorStart, event.anchorEnd);
+  const tag = formatRange(input, event.tagStart, event.tagEnd);
 
-  if (anchor) parts.push(`&${anchor}`)
-  if (tag) parts.push(formatTag(tag, tagHandlers))
+  if (anchor) parts.push(`&${anchor}`);
+  if (tag) parts.push(formatTag(tag, tagHandlers));
 
-  return parts.length > 0 ? `${parts.join(' ')} ` : ''
+  return parts.length > 0 ? `${parts.join(" ")} ` : "";
 }
 
-function tagHandlersFromDirectives (directives) {
-  const tagHandlers = Object.create(null)
+function tagHandlersFromDirectives(directives) {
+  const tagHandlers = Object.create(null);
   for (const directive of directives) {
-    if (directive.kind === 'tag') tagHandlers[directive.handle] = directive.prefix
+    if (directive.kind === "tag")
+      tagHandlers[directive.handle] = directive.prefix;
   }
-  return tagHandlers
+  return tagHandlers;
 }
 
-function scalarStyleMarker (style) {
-  if (style === SCALAR_STYLE_SINGLE_QUOTED) return "'"
-  if (style === SCALAR_STYLE_DOUBLE_QUOTED) return '"'
-  if (style === SCALAR_STYLE_LITERAL_BLOCK) return '|'
-  if (style === SCALAR_STYLE_FOLDED_BLOCK) return '>'
-  return ':'
+function scalarStyleMarker(style) {
+  if (style === SCALAR_STYLE_SINGLE_QUOTED) return "'";
+  if (style === SCALAR_STYLE_DOUBLE_QUOTED) return '"';
+  if (style === SCALAR_STYLE_LITERAL_BLOCK) return "|";
+  if (style === SCALAR_STYLE_FOLDED_BLOCK) return ">";
+  return ":";
 }
 
-function actualTreeLines (input) {
-  const events = parseEvents(input, {})
+function actualTreeLines(input) {
+  const events = parseEvents(input, {});
 
-  const lines = []
-  const stack = []
-  let tagHandlers = Object.create(null)
+  const lines = [];
+  const stack = [];
+  let tagHandlers = Object.create(null);
 
   for (const event of events) {
     if (event.type === EVENT_DOCUMENT) {
-      tagHandlers = tagHandlersFromDirectives(event.directives)
-      lines.push(event.explicitStart ? '+DOC ---' : '+DOC')
-      stack.push(event)
+      tagHandlers = tagHandlersFromDirectives(event.directives);
+      lines.push(event.explicitStart ? "+DOC ---" : "+DOC");
+      stack.push(event);
     } else if (event.type === EVENT_SEQUENCE) {
-      const style = event.style === COLLECTION_STYLE_FLOW ? ' []' : ''
-      const props = formatProperties(input, event, tagHandlers)
-      lines.push(`+SEQ${style} ${props}`.replace(/\s+/g, ' ').trimEnd())
-      stack.push(event)
+      const style = event.style === COLLECTION_STYLE_FLOW ? " []" : "";
+      const props = formatProperties(input, event, tagHandlers);
+      lines.push(`+SEQ${style} ${props}`.replace(/\s+/g, " ").trimEnd());
+      stack.push(event);
     } else if (event.type === EVENT_MAPPING) {
-      const style = event.style === COLLECTION_STYLE_FLOW ? ' {}' : ''
-      const props = formatProperties(input, event, tagHandlers)
-      lines.push(`+MAP${style} ${props}`.replace(/\s+/g, ' ').trimEnd())
-      stack.push(event)
+      const style = event.style === COLLECTION_STYLE_FLOW ? " {}" : "";
+      const props = formatProperties(input, event, tagHandlers);
+      lines.push(`+MAP${style} ${props}`.replace(/\s+/g, " ").trimEnd());
+      stack.push(event);
     } else if (event.type === EVENT_SCALAR) {
-      const props = formatProperties(input, event, tagHandlers)
-      const value = escapeTreeValue(getScalarValue(input, event))
-      lines.push(`=VAL ${props}${scalarStyleMarker(event.style)}${value}`)
+      const props = formatProperties(input, event, tagHandlers);
+      const value = escapeTreeValue(getScalarValue(input, event));
+      lines.push(`=VAL ${props}${scalarStyleMarker(event.style)}${value}`);
     } else if (event.type === EVENT_ALIAS) {
-      lines.push(`=ALI *${formatRange(input, event.anchorStart, event.anchorEnd)}`)
+      lines.push(
+        `=ALI *${formatRange(input, event.anchorStart, event.anchorEnd)}`,
+      );
     } else if (event.type === EVENT_POP) {
-      const opened = stack.pop()
+      const opened = stack.pop();
 
       if (opened?.type === EVENT_DOCUMENT) {
-        lines.push(opened.explicitEnd ? '-DOC ...' : '-DOC')
+        lines.push(opened.explicitEnd ? "-DOC ..." : "-DOC");
       } else if (opened?.type === EVENT_SEQUENCE) {
-        lines.push('-SEQ')
+        lines.push("-SEQ");
       } else if (opened?.type === EVENT_MAPPING) {
-        lines.push('-MAP')
+        lines.push("-MAP");
       }
     }
   }
 
-  return lines
+  return lines;
 }
 
 // The suite's outer stream markers are inconsistent across generations: ignore
 // an optional leading `---` and trailing `...`.
-function normalizeDumpMarkers (yaml) {
-  const withoutStart = yaml.replace(/^---(?:(?:[ \t]+)(?=\S)|[ \t]*\n)/, '')
-  return withoutStart.endsWith('...\n') ? withoutStart.slice(0, -4) : withoutStart
+function normalizeDumpMarkers(yaml) {
+  const withoutStart = yaml.replace(/^---(?:(?:[ \t]+)(?=\S)|[ \t]*\n)/, "");
+  return withoutStart.endsWith("...\n")
+    ? withoutStart.slice(0, -4)
+    : withoutStart;
 }
 
-function normalizeFixtureDump (sample) {
-  let result = sample
-  result = unescapeFixtureText(result)
-  result = normalizeDumpMarkers(result)
+function normalizeFixtureDump(sample) {
+  let result = sample;
+  result = unescapeFixtureText(result);
+  result = normalizeDumpMarkers(result);
   // Quick hack for a couple of tests using legacy \uXXXX escapes for non-ASCII
   result = result.replace(/\\u([0-9A-Fa-f]{4})/g, (match, hex) => {
-    const code = parseInt(hex, 16)
-    return code > 0x7E ? String.fromCharCode(code) : match
-  })
+    const code = parseInt(hex, 16);
+    return code > 0x7e ? String.fromCharCode(code) : match;
+  });
 
-  return result
+  return result;
 }
 
 // `emit` keeps the %YAML/%TAG directives that the presenter doesn't render;
 // drop those lines so the rest of the stream can be compared.
-function normalizeFixtureEmit (sample) {
-  let result = sample
-  result = unescapeFixtureText(result)
-  result = normalizeDumpMarkers(result)
+function normalizeFixtureEmit(sample) {
+  let result = sample;
+  result = unescapeFixtureText(result);
+  result = normalizeDumpMarkers(result);
   // emit can contain directives, drop those.
-  result = result.replace(/^%(YAML|TAG)\b.*\n/gm, '')
-  return result
+  result = result.replace(/^%(YAML|TAG)\b.*\n/gm, "");
+  return result;
 }
 
-describe('yaml-test-suite parser tree', () => {
+describe("yaml-test-suite parser tree", () => {
   if (!fs.existsSync(srcDir)) {
-    throw new Error('Missing yaml-test-suite fixtures. Run npm run spec:get first.')
+    throw new Error(
+      "Missing yaml-test-suite fixtures. Run npm run spec:get first.",
+    );
   }
 
   for (const file of fs.readdirSync(srcDir).sort()) {
-    if (path.extname(file) !== '.yaml') continue
+    if (path.extname(file) !== ".yaml") continue;
 
-    const id = path.basename(file, '.yaml')
-    const fixtureFile = path.join(srcDir, file)
-    const fixtures = load(fs.readFileSync(fixtureFile, 'utf8'), { filename: fixtureFile })
+    const id = path.basename(file, ".yaml");
+    const fixtureFile = path.join(srcDir, file);
+    const fixtures = load(fs.readFileSync(fixtureFile, "utf8"), {
+      filename: fixtureFile,
+    });
 
     for (let index = 1; index < fixtures.length; index++) {
-      const current = fixtures[index]
-      fixtures[index] = Object.assign({}, fixtures[index - 1], current)
+      const current = fixtures[index];
+      fixtures[index] = Object.assign({}, fixtures[index - 1], current);
 
-      if (!Object.hasOwn(current, 'fail')) delete fixtures[index].fail
+      if (!Object.hasOwn(current, "fail")) delete fixtures[index].fail;
     }
 
     // A `skip: true` on the first document means the whole file is excluded from
     // the suite; keep one visible marker so it isn't dropped silently.
     if (fixtures[0]?.skip) {
       describe(id, () => {
-        it(id, { skip: 'suite marks file skip' }, () => {})
-      })
-      continue
+        it(id, { skip: "suite marks file skip" }, () => {});
+      });
+      continue;
     }
 
     fixtures.forEach((fixture, index) => {
-      const suffix = fixtures.length > 1 ? `/${String(index).padStart(2, '0')}` : ''
-      const hasTree = typeof fixture.tree === 'string'
-      const hasJson = typeof fixture.json === 'string'
-      const hasDump = typeof fixture.dump === 'string'
-      const hasEmit = typeof fixture.emit === 'string'
+      const suffix =
+        fixtures.length > 1 ? `/${String(index).padStart(2, "0")}` : "";
+      const hasTree = typeof fixture.tree === "string";
+      const hasJson = typeof fixture.json === "string";
+      const hasDump = typeof fixture.dump === "string";
+      const hasEmit = typeof fixture.emit === "string";
 
       // Annotate the title with the checks this fixture actually runs. The full
       // tree+json+round-trip set carries no suffix; reduced sets list their
       // active checks by name. `(tree, json)` (no round-trip) uniquely marks a
       // fail fixture, since a non-fail fixture with `json` always round-trips.
-      let checks
-      if (fixture.fail) checks = ['tree', 'json']
-      else if (!hasTree && !hasJson) checks = ['usable']
-      else if (!hasJson) checks = ['tree']
-      else checks = ['tree', 'json', 'round-trip']
-      const annotation = checks.length === 3 ? '' : ` (${checks.join(', ')})`
+      let checks;
+      if (fixture.fail) checks = ["tree", "json"];
+      else if (!hasTree && !hasJson) checks = ["usable"];
+      else if (!hasJson) checks = ["tree"];
+      else checks = ["tree", "json", "round-trip"];
+      const annotation = checks.length === 3 ? "" : ` (${checks.join(", ")})`;
 
-      const title = `${id}${suffix} ${fixture.name || id}${annotation}`
+      const title = `${id}${suffix} ${fixture.name || id}${annotation}`;
 
       describe(title, () => {
         if (fixture.fail) {
           it(`${id} tree`, () => {
-            const input = unescapeFixtureText(fixture.yaml)
+            const input = unescapeFixtureText(fixture.yaml);
 
-            assert.throws(() => actualTreeLines(input))
-          })
+            assert.throws(() => actualTreeLines(input));
+          });
 
           it(`${id} json`, () => {
-            const input = unescapeFixtureText(fixture.yaml)
+            const input = unescapeFixtureText(fixture.yaml);
 
-            assert.throws(() => loadAll(input))
-          })
-          return
+            assert.throws(() => loadAll(input));
+          });
+          return;
         }
 
         // After inheritance a non-fail fixture must carry at least a `tree`
@@ -281,58 +291,69 @@ describe('yaml-test-suite parser tree', () => {
         // which signals a broken merge or an unexpected suite shape — fail loud.
         if (!hasTree && !hasJson) {
           it(`${id} usable`, () => {
-            assert.fail('fixture has no usable expectation after merge')
-          })
-          return
+            assert.fail("fixture has no usable expectation after merge");
+          });
+          return;
         }
 
         it(`${id} tree`, () => {
-          const input = unescapeFixtureText(fixture.yaml)
+          const input = unescapeFixtureText(fixture.yaml);
 
-          assert.deepStrictEqual(actualTreeLines(input), expectedTreeLines(fixture.tree))
-        })
+          assert.deepStrictEqual(
+            actualTreeLines(input),
+            expectedTreeLines(fixture.tree),
+          );
+        });
 
         // `json`/`round-trip` need the suite's JSON expectation; `dump` below
         // does not — it parses YAML and compares to the `dump` field directly,
         // so it must not sit behind this gate.
         if (hasJson) {
           it(`${id} json`, () => {
-            const input = unescapeFixtureText(fixture.yaml)
-            const result = loadAll(input, { schema: SPEC_SCHEMA })
-            const expected = parseConcatenatedJson(unescapeFixtureText(fixture.json))
+            const input = unescapeFixtureText(fixture.yaml);
+            const result = loadAll(input, { schema: SPEC_SCHEMA });
+            const expected = parseConcatenatedJson(
+              unescapeFixtureText(fixture.json),
+            );
 
-            assert.deepStrictEqual(result, expected)
-          })
+            assert.deepStrictEqual(result, expected);
+          });
 
           it(`${id} round-trip`, () => {
-            const input = unescapeFixtureText(fixture.yaml)
-            const docs = loadAll(input, { schema: SPEC_SCHEMA })
+            const input = unescapeFixtureText(fixture.yaml);
+            const docs = loadAll(input, { schema: SPEC_SCHEMA });
 
             // dump() emits a single document without a `---` marker, so join
             // multi-document fixtures with explicit markers before reloading.
-            const dumped = docs.map(doc => `---\n${dump(doc)}`).join('')
+            const dumped = docs.map((doc) => `---\n${dump(doc)}`).join("");
 
-            assert.deepStrictEqual(loadAll(dumped, { schema: SPEC_SCHEMA }), docs)
-          })
+            assert.deepStrictEqual(
+              loadAll(dumped, { schema: SPEC_SCHEMA }),
+              docs,
+            );
+          });
         }
 
         // Some fixture style diverge, and difficult to use
         const divergedFixtures = [
           // null vs empty scalar
-          '4ABK', 'DK95',
+          "4ABK",
+          "DK95",
           // missing block scalar indent indicator
-          '4QFQ', 'K858', 'R4YG',
-        ]
+          "4QFQ",
+          "K858",
+          "R4YG",
+        ];
 
         if (hasDump || hasEmit) {
           // Dump straight from the parsed events (styles/tags/anchors preserved)
           // and compare byte-for-byte to the suite's canonical `dump`.
           it(`${id} dump`, { skip: divergedFixtures.includes(id) }, () => {
-            const input = unescapeFixtureText(fixture.yaml)
-            const events = parseEvents(input, {})
+            const input = unescapeFixtureText(fixture.yaml);
+            const events = parseEvents(input, {});
 
-            const opts = { schema: SPEC_SCHEMA, seqNoIndent: true }
-            const documents = eventsToAst(events, { ...opts, source: input })
+            const opts = { schema: SPEC_SCHEMA, seqNoIndent: true };
+            const documents = eventsToAst(events, { ...opts, source: input });
 
             // Our AST stays faithful to the input, but the suite's `dump`
             // samples follow fixed canonical-dump conventions. Bend the AST to
@@ -341,59 +362,76 @@ describe('yaml-test-suite parser tree', () => {
 
             // Samples carry no %YAML/%TAG directives — tags are expanded inline.
             for (const doc of documents) {
-              const tagHandlers = tagHandlersFromDirectives(doc.directives)
+              const tagHandlers = tagHandlersFromDirectives(doc.directives);
 
               visit([doc], (node) => {
-                if (node.style.tagged && node.tag !== '!') node.tag = tagNameShort(tagNameFull(node.tag, tagHandlers))
-              })
+                if (node.style.tagged && node.tag !== "!")
+                  node.tag = tagNameShort(tagNameFull(node.tag, tagHandlers));
+              });
 
-              doc.directives = []
+              doc.directives = [];
             }
 
             // Samples always render collections as block; only empty `{}`/`[]`
             // stay flow (they have no block form).
             visit(documents, (node) => {
-              if (node.kind === 'sequence' || node.kind === 'mapping') {
-                node.style.flow = false
+              if (node.kind === "sequence" || node.kind === "mapping") {
+                node.style.flow = false;
               }
-            })
+            });
 
             // Samples never present scalar values as block/plain, so fall back
             // to the quoting they use.
             visit(documents, (node) => {
-              if (node.kind !== 'scalar') return
+              if (node.kind !== "scalar") return;
 
-              const { style, value } = node
+              const { style, value } = node;
 
-              const isPlain = !style.singleQuoted && !style.doubleQuoted &&
-                !style.literal && !style.folded
+              const isPlain =
+                !style.singleQuoted &&
+                !style.doubleQuoted &&
+                !style.literal &&
+                !style.folded;
 
-              const unsafeBlock = /^ +$/m.test(value) || /^ +\t/m.test(value) ||
-                (style.folded && value.includes('\t'))
+              const unsafeBlock =
+                /^ +$/m.test(value) ||
+                /^ +\t/m.test(value) ||
+                (style.folded && value.includes("\t"));
 
-              if ((style.literal || style.folded) && (unsafeBlock || value === '')) {
-                style.literal = false
-                style.folded = false
-                style.doubleQuoted = true
-              } else if (isPlain && (value.includes('\n') || value.startsWith('---'))) {
-                style.singleQuoted = true
+              if (
+                (style.literal || style.folded) &&
+                (unsafeBlock || value === "")
+              ) {
+                style.literal = false;
+                style.folded = false;
+                style.doubleQuoted = true;
+              } else if (
+                isPlain &&
+                (value.includes("\n") || value.startsWith("---"))
+              ) {
+                style.singleQuoted = true;
               }
-            })
+            });
 
             // Samples double-quote any scalar with non-ASCII chars.
             visit(documents, (node) => {
-              if (node.kind === 'scalar' && /[\u0080-\uffff]/.test(node.value)) {
-                node.style.singleQuoted = false
-                node.style.literal = false
-                node.style.folded = false
-                node.style.doubleQuoted = true
+              if (
+                node.kind === "scalar" &&
+                /[\u0080-\uffff]/.test(node.value)
+              ) {
+                node.style.singleQuoted = false;
+                node.style.literal = false;
+                node.style.folded = false;
+                node.style.doubleQuoted = true;
               }
-            })
+            });
 
-            const out = normalizeDumpMarkers(present(documents, opts))
+            const out = normalizeDumpMarkers(present(documents, opts));
 
-            const emitOk = hasEmit && out === normalizeFixtureEmit(fixture.emit)
-            const dumpOk = hasDump && out === normalizeFixtureDump(fixture.dump)
+            const emitOk =
+              hasEmit && out === normalizeFixtureEmit(fixture.emit);
+            const dumpOk =
+              hasDump && out === normalizeFixtureDump(fixture.dump);
 
             // The suite carries two reference renderings: `dump` (canonical) and
             // an optional `emit`. They were assembled across generations and a
@@ -401,14 +439,14 @@ describe('yaml-test-suite parser tree', () => {
             // otherwise assert against `dump` for a readable diff.
             if (!emitOk && !dumpOk) {
               if (hasDump) {
-                assert.strictEqual(out, normalizeFixtureDump(fixture.dump))
+                assert.strictEqual(out, normalizeFixtureDump(fixture.dump));
               } else {
-                assert.strictEqual(out, normalizeFixtureEmit(fixture.emit))
+                assert.strictEqual(out, normalizeFixtureEmit(fixture.emit));
               }
             }
-          })
+          });
         }
-      })
-    })
+      });
+    });
   }
-})
+});

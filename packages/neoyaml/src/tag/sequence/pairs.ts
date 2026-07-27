@@ -1,29 +1,32 @@
-import { defineSequenceTag, type SequenceTagDefinition } from '../../tag.ts'
+import { defineSequenceTag, type SequenceTagDefinition } from "../../tag.ts";
 
-type Pair = [unknown, unknown]
+type Pair = [unknown, unknown];
 
-const pairsTag: SequenceTagDefinition<Pair[], Pair[]> = defineSequenceTag('tag:yaml.org,2002:pairs', {
-  create: () => [] as Pair[],
-  addItem: (container, item) => {
-    if (item instanceof Map) {
-      if (item.size !== 1) return 'cannot resolve a pairs item'
+const pairsTag: SequenceTagDefinition<Pair[], Pair[]> = defineSequenceTag(
+  "tag:yaml.org,2002:pairs",
+  {
+    create: () => [] as Pair[],
+    addItem: (container, item) => {
+      if (item instanceof Map) {
+        if (item.size !== 1) return "cannot resolve a pairs item";
 
-      container.push(item.entries().next().value!)
-      return ''
-    }
+        container.push(item.entries().next().value!);
+        return "";
+      }
 
-    if (Object.prototype.toString.call(item) !== '[object Object]') {
-      return 'cannot resolve a pairs item'
-    }
+      if (Object.prototype.toString.call(item) !== "[object Object]") {
+        return "cannot resolve a pairs item";
+      }
 
-    const object = item as Record<string, unknown>
-    const keys = Object.keys(object)
+      const object = item as Record<string, unknown>;
+      const keys = Object.keys(object);
 
-    if (keys.length !== 1) return 'cannot resolve a pairs item'
+      if (keys.length !== 1) return "cannot resolve a pairs item";
 
-    container.push([keys[0], object[keys[0]!]] satisfies Pair)
-    return ''
-  }
-})
+      container.push([keys[0], object[keys[0]!]] satisfies Pair);
+      return "";
+    },
+  },
+);
 
-export { pairsTag }
+export { pairsTag };

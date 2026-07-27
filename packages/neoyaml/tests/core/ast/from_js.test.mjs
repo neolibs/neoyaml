@@ -1,47 +1,53 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
-import { CORE_SCHEMA, dump, jsToAst, load, realMapTag } from 'neoyaml'
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-const schema = CORE_SCHEMA.withTags(realMapTag)
+import { CORE_SCHEMA, dump, jsToAst, load, realMapTag } from "neoyaml";
 
-describe('ast from_js', () => {
-  it('returns a document array', () => {
-    const documents = jsToAst({ a: 1 }, CORE_SCHEMA)
+const schema = CORE_SCHEMA.withTags(realMapTag);
 
-    assert.equal(documents.length, 1)
-    assert.deepEqual(documents[0].directives, [])
-    assert.equal(documents[0].contents.kind, 'mapping')
-  })
+describe("ast from_js", () => {
+  it("returns a document array", () => {
+    const documents = jsToAst({ a: 1 }, CORE_SCHEMA);
 
-  it('represents an invalid root as an empty document', () => {
-    assert.deepEqual(jsToAst(undefined, CORE_SCHEMA), [{ contents: null, directives: [] }])
-  })
+    assert.equal(documents.length, 1);
+    assert.deepEqual(documents[0].directives, []);
+    assert.equal(documents[0].contents.kind, "mapping");
+  });
 
-  it('replaces undefined sequence items with null', () => {
-    assert.equal(dump([undefined]), '- null\n')
-  })
+  it("represents an invalid root as an empty document", () => {
+    assert.deepEqual(jsToAst(undefined, CORE_SCHEMA), [
+      { contents: null, directives: [] },
+    ]);
+  });
 
-  it('dedups a cycle through a Map', () => {
-    const source = new Map()
-    source.set('self', source)
+  it("replaces undefined sequence items with null", () => {
+    assert.equal(dump([undefined]), "- null\n");
+  });
 
-    const dumped = dump(source, { schema })
-    assert.match(dumped, /&ref_0/)
-    assert.match(dumped, /\*ref_0/)
+  it("dedups a cycle through a Map", () => {
+    const source = new Map();
+    source.set("self", source);
 
-    const result = load(dumped, { schema })
-    assert.strictEqual(result.get('self'), result)
-  })
+    const dumped = dump(source, { schema });
+    assert.match(dumped, /&ref_0/);
+    assert.match(dumped, /\*ref_0/);
 
-  it('dedups sharing inside a Map', () => {
-    const shared = new Map([['x', 1]])
-    const source = new Map([['a', shared], ['b', shared]])
+    const result = load(dumped, { schema });
+    assert.strictEqual(result.get("self"), result);
+  });
 
-    const dumped = dump(source, { schema })
-    assert.match(dumped, /&ref_0/)
-    assert.match(dumped, /\*ref_0/)
+  it("dedups sharing inside a Map", () => {
+    const shared = new Map([["x", 1]]);
+    const source = new Map([
+      ["a", shared],
+      ["b", shared],
+    ]);
 
-    const result = load(dumped, { schema })
-    assert.strictEqual(result.get('a'), result.get('b'))
-  })
-})
+    const dumped = dump(source, { schema });
+    assert.match(dumped, /&ref_0/);
+    assert.match(dumped, /\*ref_0/);
+
+    const result = load(dumped, { schema });
+    assert.strictEqual(result.get("a"), result.get("b"));
+  });
+});

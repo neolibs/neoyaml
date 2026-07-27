@@ -1,11 +1,14 @@
-import { defineSequenceTag, type SequenceTagDefinition } from '../../tag.ts'
+import { defineSequenceTag, type SequenceTagDefinition } from "../../tag.ts";
 
-const seqTag: SequenceTagDefinition<unknown[], unknown[]> = defineSequenceTag('tag:yaml.org,2002:seq', {
-  create: () => [] as unknown[],
-  addItem: (container, item) => {
-    container.push(item)
+const seqTag: SequenceTagDefinition<unknown[], unknown[]> = defineSequenceTag(
+  "tag:yaml.org,2002:seq",
+  {
+    create: () => [] as unknown[],
+    addItem: (container, item) => {
+      container.push(item);
+    },
+    identify: Array.isArray,
   },
-  identify: Array.isArray
-})
+);
 
-export { seqTag }
+export { seqTag };

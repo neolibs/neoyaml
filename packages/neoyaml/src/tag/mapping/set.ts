@@ -1,21 +1,24 @@
-import { defineMappingTag, type MappingTagDefinition } from '../../tag.ts'
+import { defineMappingTag, type MappingTagDefinition } from "../../tag.ts";
 
-const setTag: MappingTagDefinition<Set<unknown>, Set<unknown>> = defineMappingTag('tag:yaml.org,2002:set', {
+const setTag: MappingTagDefinition<
+  Set<unknown>,
+  Set<unknown>
+> = defineMappingTag("tag:yaml.org,2002:set", {
   create: () => new Set<unknown>(),
   identify: (data) => data instanceof Set,
   represent: (data: Set<unknown>) => {
-    const map = new Map<unknown, null>()
-    for (const key of data) map.set(key, null)
-    return map
+    const map = new Map<unknown, null>();
+    for (const key of data) map.set(key, null);
+    return map;
   },
   addPair: (container, key, value) => {
-    if (value !== null) return 'cannot resolve a set item'
-    container.add(key)
-    return ''
+    if (value !== null) return "cannot resolve a set item";
+    container.add(key);
+    return "";
   },
   has: (container, key) => container.has(key),
   keys: (container) => container.keys(),
-  get: () => null
-})
+  get: () => null,
+});
 
-export { setTag }
+export { setTag };

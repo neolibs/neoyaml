@@ -5,8 +5,8 @@
   "author": "gameroman",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/neotoml/neotoml.git",
-    "directory": "packages/neotoml"
+    "url": "git+https://github.com/neoyaml/neoyaml.git",
+    "directory": "packages/neoyaml"
   },
   "files": [
     "dist"

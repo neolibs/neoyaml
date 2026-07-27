@@ -1,20 +1,28 @@
-import { defineScalarTag, NOT_RESOLVED, type ScalarTagDefinition } from '../../tag.ts'
+import {
+  defineScalarTag,
+  NOT_RESOLVED,
+  type ScalarTagDefinition,
+} from "../../tag.ts";
 
-const TRUE_VALUES = ['true']
-const FALSE_VALUES = ['false']
+const TRUE_VALUES = ["true"];
+const FALSE_VALUES = ["false"];
 
-const boolJsonTag: ScalarTagDefinition<boolean> = defineScalarTag('tag:yaml.org,2002:bool', {
-  implicit: true,
-  // Superset of source.charAt(0) over all matched inputs: true, false.
-  implicitFirstChars: ['t', 'f'],
-  resolve: (source) => {
-    if (TRUE_VALUES.indexOf(source) !== -1) return true
-    if (FALSE_VALUES.indexOf(source) !== -1) return false
+const boolJsonTag: ScalarTagDefinition<boolean> = defineScalarTag(
+  "tag:yaml.org,2002:bool",
+  {
+    implicit: true,
+    // Superset of source.charAt(0) over all matched inputs: true, false.
+    implicitFirstChars: ["t", "f"],
+    resolve: (source) => {
+      if (TRUE_VALUES.indexOf(source) !== -1) return true;
+      if (FALSE_VALUES.indexOf(source) !== -1) return false;
 
-    return NOT_RESOLVED
+      return NOT_RESOLVED;
+    },
+    identify: (object) =>
+      Object.prototype.toString.call(object) === "[object Boolean]",
+    represent: (object) => (object ? "true" : "false"),
   },
-  identify: (object) => Object.prototype.toString.call(object) === '[object Boolean]',
-  represent: (object) => object ? 'true' : 'false'
-})
+);
 
-export { boolJsonTag }
+export { boolJsonTag };

@@ -1,9 +1,10 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
-import { load, realMapTag, YAML11_SCHEMA } from 'neoyaml'
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-describe('tags/pair', () => {
-  it('common', () => {
+import { load, realMapTag, YAML11_SCHEMA } from "neoyaml";
+
+describe("tags/pair", () => {
+  it("common", () => {
     const src = `
 Block tasks: !!pairs
   - meeting: with team.
@@ -11,81 +12,90 @@ Block tasks: !!pairs
   - break: lunch.
   - meeting: with client.
 Flow tasks: !!pairs [ meeting: with team, meeting: with boss ]
-`
+`;
     const expected = {
-      'Block tasks': [
-        ['meeting', 'with team.'],
-        ['meeting', 'with boss.'],
-        ['break', 'lunch.'],
-        ['meeting', 'with client.']
+      "Block tasks": [
+        ["meeting", "with team."],
+        ["meeting", "with boss."],
+        ["break", "lunch."],
+        ["meeting", "with client."],
       ],
-      'Flow tasks': [
-        ['meeting', 'with team'],
-        ['meeting', 'with boss']
-      ]
-    }
+      "Flow tasks": [
+        ["meeting", "with team"],
+        ["meeting", "with boss"],
+      ],
+    };
 
-    assert.deepStrictEqual(load(src, { schema: YAML11_SCHEMA }), expected)
-  })
+    assert.deepStrictEqual(load(src, { schema: YAML11_SCHEMA }), expected);
+  });
 
-  it('pairs throws when not a sequence', () => {
+  it("pairs throws when not a sequence", () => {
     const src = `
 --- !!pairs
 foo: bar
 baz: bat
-`
-    assert.throws(() => load(src, { schema: YAML11_SCHEMA }), /unknown mapping tag/)
-  })
+`;
+    assert.throws(
+      () => load(src, { schema: YAML11_SCHEMA }),
+      /unknown mapping tag/,
+    );
+  });
 
-  it('pairs throws on a non-mapping item', () => {
+  it("pairs throws on a non-mapping item", () => {
     const src = `
 --- !!pairs
 - foo: bar
 - baz
-`
-    assert.throws(() => load(src, { schema: YAML11_SCHEMA }), /cannot resolve a pairs item/)
-  })
+`;
+    assert.throws(
+      () => load(src, { schema: YAML11_SCHEMA }),
+      /cannot resolve a pairs item/,
+    );
+  });
 
-  it('pairs throws on an item with multiple keys', () => {
+  it("pairs throws on an item with multiple keys", () => {
     const src = `
 --- !!pairs
 - foo: bar
 - baz: bar
   bar: bar
-`
-    assert.throws(() => load(src, { schema: YAML11_SCHEMA }), /cannot resolve a pairs item/)
-  })
-
-  it('throws on a Map item with multiple keys (realMapTag)', () => {
-    const schema = YAML11_SCHEMA.withTags(realMapTag)
+`;
     assert.throws(
-      () => load('!!pairs [ { foo: bar, baz: bat } ]', { schema }),
-      /cannot resolve a pairs item/
-    )
-  })
+      () => load(src, { schema: YAML11_SCHEMA }),
+      /cannot resolve a pairs item/,
+    );
+  });
 
-  it('supports scalar keys with realMapTag', () => {
-    const schema = YAML11_SCHEMA.withTags(realMapTag)
-    const result = load('!!pairs [ foo: bar ]', { schema })
-
-    assert.deepStrictEqual(result, [['foo', 'bar']])
-  })
-
-  it('rejects complex keys without realMapTag', () => {
+  it("throws on a Map item with multiple keys (realMapTag)", () => {
+    const schema = YAML11_SCHEMA.withTags(realMapTag);
     assert.throws(
-      () => load('!!pairs [ ? [ foo, bar ] : baz ]', { schema: YAML11_SCHEMA }),
-      /object-based map does not support complex keys/
-    )
-  })
+      () => load("!!pairs [ { foo: bar, baz: bat } ]", { schema }),
+      /cannot resolve a pairs item/,
+    );
+  });
 
-  it('preserves complex keys with realMapTag', () => {
-    const schema = YAML11_SCHEMA.withTags(realMapTag)
-    const result = load('!!pairs [ ? [ foo, bar ] : baz ]', { schema })
+  it("supports scalar keys with realMapTag", () => {
+    const schema = YAML11_SCHEMA.withTags(realMapTag);
+    const result = load("!!pairs [ foo: bar ]", { schema });
 
-    assert.deepStrictEqual(result, [[['foo', 'bar'], 'baz']])
-  })
+    assert.deepStrictEqual(result, [["foo", "bar"]]);
+  });
 
-  it('Resolving explicit !!pairs on empty node', () => {
-    assert.deepStrictEqual(load('!!pairs', { schema: YAML11_SCHEMA }), [])
-  })
-})
+  it("rejects complex keys without realMapTag", () => {
+    assert.throws(
+      () => load("!!pairs [ ? [ foo, bar ] : baz ]", { schema: YAML11_SCHEMA }),
+      /object-based map does not support complex keys/,
+    );
+  });
+
+  it("preserves complex keys with realMapTag", () => {
+    const schema = YAML11_SCHEMA.withTags(realMapTag);
+    const result = load("!!pairs [ ? [ foo, bar ] : baz ]", { schema });
+
+    assert.deepStrictEqual(result, [[["foo", "bar"], "baz"]]);
+  });
+
+  it("Resolving explicit !!pairs on empty node", () => {
+    assert.deepStrictEqual(load("!!pairs", { schema: YAML11_SCHEMA }), []);
+  });
+});

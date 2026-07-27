@@ -1,9 +1,10 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
-import { CORE_SCHEMA, JSON_SCHEMA, load, loadAll, dump } from 'neoyaml'
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-describe('tags', () => {
-  it('null', () => {
+import { CORE_SCHEMA, JSON_SCHEMA, load, loadAll, dump } from "neoyaml";
+
+describe("tags", () => {
+  it("null", () => {
     const src = `
 ---
 ---
@@ -18,7 +19,7 @@ sparse:
   -
   - 4th entry
   - Null
-`
+`;
 
     const expected = [
       null,
@@ -26,42 +27,42 @@ sparse:
         empty: null,
         canonical: null,
         english: null,
-        null: 'null key'
+        null: "null key",
       },
       {
-        sparse: [
-          null,
-          '2nd entry',
-          null,
-          '4th entry',
-          null
-        ]
-      }
-    ]
+        sparse: [null, "2nd entry", null, "4th entry", null],
+      },
+    ];
 
-    assert.deepStrictEqual(loadAll(src, { schema: CORE_SCHEMA }), expected)
-    assert.deepStrictEqual(load(dump(expected[1], { schema: CORE_SCHEMA }), { schema: CORE_SCHEMA }), expected[1])
-  })
+    assert.deepStrictEqual(loadAll(src, { schema: CORE_SCHEMA }), expected);
+    assert.deepStrictEqual(
+      load(dump(expected[1], { schema: CORE_SCHEMA }), { schema: CORE_SCHEMA }),
+      expected[1],
+    );
+  });
 
-  it('null/JSON schema', () => {
+  it("null/JSON schema", () => {
     const src = `
 empty:
 canonical: ~
 english: null
 variants: [ Null, NULL ]
-`
+`;
 
     const expected = {
-      empty: '',
-      canonical: '~',
+      empty: "",
+      canonical: "~",
       english: null,
-      variants: ['Null', 'NULL']
-    }
+      variants: ["Null", "NULL"],
+    };
 
-    assert.deepStrictEqual(load(src, { schema: JSON_SCHEMA }), expected)
-    assert.deepStrictEqual(load(dump(expected, { schema: JSON_SCHEMA }), { schema: JSON_SCHEMA }), expected)
+    assert.deepStrictEqual(load(src, { schema: JSON_SCHEMA }), expected);
+    assert.deepStrictEqual(
+      load(dump(expected, { schema: JSON_SCHEMA }), { schema: JSON_SCHEMA }),
+      expected,
+    );
 
     // explicit empty !!null resolves to null
-    assert.strictEqual(load('!!null', { schema: JSON_SCHEMA }), null)
-  })
-})
+    assert.strictEqual(load("!!null", { schema: JSON_SCHEMA }), null);
+  });
+});
