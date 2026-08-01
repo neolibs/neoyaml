@@ -1,5 +1,6 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+
 import { EVENT_SCALAR, getScalarValue, loadAll, parseEvents } from "js-yaml";
 
 describe("parser", () => {
