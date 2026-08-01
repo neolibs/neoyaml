@@ -432,7 +432,7 @@ function chooseScalarStyle(
             hasFoldableLine ||
             // Foldable line = too long, and not more-indented.
             (i - previousLineBreak - 1 > lineWidth &&
-              string[previousLineBreak + 1] !== " ");
+              !isMoreIndented(string[previousLineBreak + 1]));
           previousLineBreak = i;
         }
       } else if (!isPrintable(char)) {
@@ -446,7 +446,7 @@ function chooseScalarStyle(
       hasFoldableLine ||
       (shouldTrackWidth &&
         i - previousLineBreak - 1 > lineWidth &&
-        string[previousLineBreak + 1] !== " ");
+        !isMoreIndented(string[previousLineBreak + 1]));
   }
   // Although every style can represent \n without escaping, prefer block styles
   // for multiline, since they're more readable and they don't add empty lines.
@@ -581,7 +581,7 @@ function blockHeader(string: string, indentPerLevel: number) {
 // a blank line (two breaks). Encode each run of p literal `\n` as p+1 breaks and
 // indent the following content line so the continuation isn't read as a new node
 // (a bare break would yield invalid "deficient indentation" output).
-// `foldBlockScalar` can't be reused here: it treats a leading space as a
+// `foldBlockScalar` can't be reused here: it treats a leading white space as a
 // "more-indented" line and suppresses the doubling, which a flow scalar must not.
 function encodeFlowBreaks(string: string, indent: number) {
   const nextLF = string.indexOf("\n");
@@ -610,6 +610,13 @@ function dropEndingNewline(string: string) {
   return string[string.length - 1] === "\n" ? string.slice(0, -1) : string;
 }
 
+// A more-indented line is one starting with white space: YAML 1.2.2 [175]
+// s-nb-spaced-text, whose [33] s-white is a space *or a tab*. Matches the
+// parser's test in getBlockValue().
+function isMoreIndented(char?: string) {
+  return char === " " || char === "\t";
+}
+
 // Note: a long line without a suitable break point will exceed the width limit.
 // Pre-conditions: every char in str isPrintable, str.length > 0, width > 0.
 function foldBlockScalar(string: string, width: number) {
@@ -625,7 +632,7 @@ function foldBlockScalar(string: string, width: number) {
   lineRe.lastIndex = nextLF;
   let result = foldLine(string.slice(0, nextLF), width);
   // If we haven't reached the first content line yet, don't add an extra \n.
-  let prevMoreIndented = string[0] === "\n" || string[0] === " ";
+  let prevMoreIndented = string[0] === "\n" || isMoreIndented(string[0]);
   let moreIndented;
 
   // rest of the lines
@@ -634,7 +641,7 @@ function foldBlockScalar(string: string, width: number) {
     const prefix = match[1];
     const line = match[2]!;
 
-    moreIndented = line[0] === " ";
+    moreIndented = line !== "" && isMoreIndented(line[0]);
     result +=
       prefix +
       (!prevMoreIndented && !moreIndented && line !== "" ? "\n" : "") +
@@ -650,10 +657,10 @@ function foldBlockScalar(string: string, width: number) {
 // otherwise settles for the shortest line over the limit.
 // NB. More-indented lines *cannot* be folded, as that would add an extra \n.
 function foldLine(line: string, width: number) {
-  if (line === "" || line[0] === " ") return line;
+  if (line === "" || isMoreIndented(line[0])) return line;
 
-  // Since a more-indented line adds a \n, breaks can't be followed by a space.
-  const breakRe = / [^ ]/g; // note: the match index will always be <= length-2.
+  // Since a more-indented line adds a \n, breaks can't be followed by white space.
+  const breakRe = / [^ \t]/g; // note: the match index will always be <= length-2.
   let match;
   // start is an inclusive index. end, curr, and next are exclusive.
   let start = 0;

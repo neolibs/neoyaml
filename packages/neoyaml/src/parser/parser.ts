@@ -1388,11 +1388,6 @@ function parseNode(
     }
   }
 
-  if (state.position === state.lineStart && testDocumentSeparator(state)) {
-    state.depth--;
-    return false;
-  }
-
   if (indentStatus === 1) {
     while (true) {
       const ch = state.input.charCodeAt(state.position);
