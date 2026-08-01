@@ -1,14 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  constructFromEvents,
-  EVENT_SCALAR,
-  parseEvents,
-  YAMLException,
-} from "neoyaml";
+import { CORE_SCHEMA, eventsToAst, EVENT_SCALAR, parseEvents } from "neoyaml";
 
-describe("constructor", () => {
+describe("ast from_events", () => {
   it("rejects a mapping event stream with an unpaired key", () => {
     const source = "key: value";
     const events = parseEvents(source, {});
@@ -18,6 +13,6 @@ describe("constructor", () => {
 
     events.splice(valueIndex, 1);
 
-    assert.throws(() => constructFromEvents(events, { source }), YAMLException);
+    assert.throws(() => eventsToAst(events, { source, schema: CORE_SCHEMA }));
   });
 });

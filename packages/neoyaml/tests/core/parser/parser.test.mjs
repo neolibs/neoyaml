@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { EVENT_SCALAR, getScalarValue, loadAll, parseEvents } from "js-yaml";
+import { EVENT_SCALAR, getScalarValue, loadAll, parseEvents } from "neoyaml";
 
 describe("parser", () => {
   it("keeps an implicit null mapping value before a document marker", () => {
