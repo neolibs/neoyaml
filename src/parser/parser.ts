@@ -1524,7 +1524,7 @@ function parseNode(
     }
   }
 
-  allowBlockScalars = allowBlockScalars && !hasContent;
+  allowBlockScalars &&= !hasContent;
 
   if (
     !hasContent &&

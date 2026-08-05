@@ -417,7 +417,7 @@ function chooseScalarStyle(
       if (!isPrintable(char)) {
         return STYLE_DOUBLE;
       }
-      plain = plain && isPlainSafe(char, prevChar, inblock);
+      plain &&= isPlainSafe(char, prevChar, inblock);
       prevChar = char;
     }
   } else {
@@ -428,25 +428,23 @@ function chooseScalarStyle(
         hasLineBreak = true;
         // Check if any line can be folded.
         if (shouldTrackWidth) {
-          hasFoldableLine =
-            hasFoldableLine ||
+          hasFoldableLine ||=
             // Foldable line = too long, and not more-indented.
-            (i - previousLineBreak - 1 > lineWidth &&
-              !isMoreIndented(string[previousLineBreak + 1]));
+            i - previousLineBreak - 1 > lineWidth &&
+            !isMoreIndented(string[previousLineBreak + 1]);
           previousLineBreak = i;
         }
       } else if (!isPrintable(char)) {
         return STYLE_DOUBLE;
       }
-      plain = plain && isPlainSafe(char, prevChar, inblock);
+      plain &&= isPlainSafe(char, prevChar, inblock);
       prevChar = char;
     }
     // in case the end is missing a \n
-    hasFoldableLine =
-      hasFoldableLine ||
-      (shouldTrackWidth &&
-        i - previousLineBreak - 1 > lineWidth &&
-        !isMoreIndented(string[previousLineBreak + 1]));
+    hasFoldableLine ||=
+      shouldTrackWidth &&
+      i - previousLineBreak - 1 > lineWidth &&
+      !isMoreIndented(string[previousLineBreak + 1]);
   }
   // Although every style can represent \n without escaping, prefer block styles
   // for multiline, since they're more readable and they don't add empty lines.
