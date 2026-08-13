@@ -12,11 +12,6 @@ function getLength(s) {
   return s.length;
 }
 
-// Repeats a string n times.
-function repeat(string, n) {
-  return new Array(n + 1).join(string);
-}
-
 describe("Scalar style dump:", () => {
   describe("Plain style", () => {
     it("is preferred", () => {
@@ -157,7 +152,7 @@ describe("Scalar style dump:", () => {
           result += "\n";
           // indent paragraphs 3 and 4
           if (para === 3 || para === 4) {
-            result += repeat(" ", para);
+            result += " ".repeat(para);
           }
           // vary the number of words on the last line
           for (let count = 2 * (30 / 5) + para - 1; count > 0; count--) {
@@ -222,12 +217,12 @@ describe("Scalar style dump:", () => {
 
     it("should not cut off a long word at the start of a line", () => {
       assert.strictEqual(
-        dumpAndLoad("123\n" + repeat("1234567890", 9) + " hello\ngoodbye"),
+        dumpAndLoad("123\n" + "1234567890".repeat(9) + " hello\ngoodbye"),
         ">-\n" +
           indent(
             "123\n" +
               "\n" +
-              repeat("1234567890", 9) +
+              "1234567890".repeat(9) +
               "\n" +
               "hello\n" +
               "\n" +
@@ -239,10 +234,10 @@ describe("Scalar style dump:", () => {
     it("preserves consecutive spaces", () => {
       const alphabet =
         "a bc  def  ghi" +
-        repeat(" ", 70) +
+        " ".repeat(70) +
         "jk  lmn o\n" +
         " p  qrstu     v" +
-        repeat(" ", 80) +
+        " ".repeat(80) +
         "\nw x\n" +
         "yz  ";
       assert.strictEqual(
@@ -251,11 +246,11 @@ describe("Scalar style dump:", () => {
           indent(
             "a bc  def \n" +
               "ghi" +
-              repeat(" ", 70) +
+              " ".repeat(70) +
               "jk \n" +
               "lmn o\n" +
               " p  qrstu     v" +
-              repeat(" ", 80) +
+              " ".repeat(80) +
               "\n" +
               "w x\n" +
               "\n" +
@@ -264,11 +259,11 @@ describe("Scalar style dump:", () => {
       );
 
       const indeed =
-        repeat("word. ", 31) +
+        "word. ".repeat(31) +
         "\n" +
         [2, 3, 5, 7, 11, 13, 17]
           .map((n) => {
-            return repeat(" ", n);
+            return " ".repeat(n);
           })
           .join("\n");
       assert.strictEqual(
@@ -280,7 +275,7 @@ describe("Scalar style dump:", () => {
               "word. word. word. word. word. \n" +
               [2, 3, 5, 7, 11, 13, 17]
                 .map((n) => {
-                  return repeat(" ", n);
+                  return " ".repeat(n);
                 })
                 .join("\n") +
               "\n",

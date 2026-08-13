@@ -25,6 +25,7 @@ import {
 } from "./events.ts";
 
 const NO_RANGE = -1;
+// oxlint-disable-next-line typescript/unbound-method
 const HAS_OWN = Object.prototype.hasOwnProperty;
 
 const CONTEXT_FLOW_IN = 1;
@@ -1325,11 +1326,9 @@ function readBlockMapping(
       pendingExplicitKey = false;
     }
 
-    if (!atExplicitKey) {
-      if (pendingExplicitKey) {
-        addEmptyScalarEvent(state);
-        pendingExplicitKey = false;
-      }
+    if (!atExplicitKey && pendingExplicitKey) {
+      addEmptyScalarEvent(state);
+      pendingExplicitKey = false;
     }
 
     skipSeparationSpace(state, true);

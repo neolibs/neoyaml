@@ -55,8 +55,8 @@ function simpleEscapeSequence(c: number) {
   }
 }
 
-const simpleEscapeCheck = new Array(256);
-const simpleEscapeMap = new Array(256);
+const simpleEscapeCheck = Array.from({ length: 256 });
+const simpleEscapeMap = Array.from({ length: 256 });
 for (let i = 0; i < 256; i++) {
   simpleEscapeCheck[i] = simpleEscapeSequence(i) ? 1 : 0;
   simpleEscapeMap[i] = simpleEscapeSequence(i);
@@ -298,8 +298,8 @@ function getBlockValue(
 
   if (chomping === CHOMPING_KEEP) {
     result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
-  } else if (chomping !== CHOMPING_STRIP) {
-    if (didReadContent) result += "\n";
+  } else if (chomping !== CHOMPING_STRIP && didReadContent) {
+    result += "\n";
   }
 
   return result;
