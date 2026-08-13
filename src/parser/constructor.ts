@@ -379,15 +379,16 @@ function addValue(state: ConstructorState, value: unknown, tag: AnyTag) {
     frame.value = value;
     frame.hasValue = true;
   } else if (frame.kind === "sequence") {
-    if (frame.merge) {
+    if (
+      frame.merge &&
       // Element of a `<<: [...]` list: validate it is a mapping, then collect
       // it like any other item for the target to fold in.
-      if (!isMappingTag(tag)) {
-        throwError(
-          state,
-          "cannot merge mappings; the provided source object is unacceptable",
-        );
-      }
+      !isMappingTag(tag)
+    ) {
+      throwError(
+        state,
+        "cannot merge mappings; the provided source object is unacceptable",
+      );
     }
     const err = frame.tag.addItem(frame.value, value, frame.index++);
     if (err) throwError(state, err);
