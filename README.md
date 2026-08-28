@@ -4,8 +4,8 @@
 
 ## Comparison
 
-|               | neoyaml@0.1.0 | yaml@3.0.0-1 | js-yaml@5.2.3 |
+|               | neoyaml@0.2.0 | yaml@3.0.0-1 | js-yaml@5.4.1 |
 | ------------- | ------------- | ------------ | ------------- |
-| Install Size  | 131.2 kB      | 284.3 kB     | 1.6 MB        |
+| Install Size  | 154.4 kB      | 284.3 kB     | 1.7 MB        |
 | Dependencies  | 0             | 0            | 1             |
 | Module Format | ESM           | ESM          | ESM + CJS     |
